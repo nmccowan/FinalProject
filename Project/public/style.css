@@ -1,0 +1,186 @@
+body {
+    font-family: Arial, sans-serif;
+    margin: 20px;
+    max-width: 800px;
+}
+
+.hidden {
+    display: none !important;
+}
+
+header#authBar {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 10px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid rgb(210, 210, 210);
+}
+
+#authBar #registerForm {
+    flex-direction: column;
+    align-items: flex-start;
+}
+
+#authBar form input {
+    width: auto;
+    min-width: 150px;
+}
+
+#registerPanel {
+    width: 100%;
+    margin-top: 10px;
+}
+
+.navigationBar {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 12px;
+}
+
+button {
+    padding: 8px 14px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    color: #5c5c5c;
+    background: none;
+}
+
+button.active {
+    background: rgb(72, 97, 219);
+    color: white;
+}
+
+.card {
+    border: 1px solid;
+    border-radius: 6px;
+    padding: 20px;
+    margin-top: 6px;
+}
+
+form {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+form button {
+    align-self: flex-start;
+    background: rgb(72, 97, 219);
+    color: white;
+}
+
+fieldset {
+    border: 1px solid #5c5c5c;
+    border-radius: 4px;
+    padding: 10px;
+    width: 50%;
+    box-sizing: border-box;
+}
+
+.checkbox-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(10rem, 1fr));
+    gap: 6px;
+}
+
+.checkbox-grid label {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.checkbox-grid input[type="checkbox"] {
+    width: auto;
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 6px;
+}
+
+.table-wrap {
+    overflow-x: auto;
+}
+
+th, td {
+    text-align: left;
+    padding: 10px;
+    border-bottom: 1px solid #5c5c5c;
+}
+
+label, legend {
+    color: #5c5c5c;
+}
+
+input, select {
+    padding: 8px;
+    border: 1px solid #5c5c5c;
+    border-radius: 4px;
+    background: rgb(230, 228, 228);
+    font-family: Arial, sans-serif;
+}
+
+form input, form select {
+    width: 50%;
+    box-sizing: border-box;
+}
+
+#loadingIndicator {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin: 10px 0;
+    color: #5c5c5c;
+}
+
+.spinner {
+    width: 16px;
+    height: 16px;
+    border: 2px solid rgb(210, 210, 210);
+    border-top-color: rgb(72, 97, 219);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+#statusBanner {
+    padding: 10px;
+    margin: 10px 0;
+    border-radius: 4px;
+}
+
+#statusBanner.success {
+    background: #e6f4ea;
+    border: 1px solid #1e7e34;
+    color: #1e7e34;
+}
+
+#statusBanner.error {
+    background: #fce8e6;
+    border: 1px solid #c5221f;
+    color: #c5221f;
+}
+
+.actionLink, button.linkBtn {
+    color: rgb(72, 97, 219);
+    text-decoration: underline;
+    background: none;
+    padding: 0 6px 0 0;
+}
+
+.actionLink.deleteBtn, button.deleteBtn {
+    color: #c5221f;
+}
+
+@media (max-width: 700px) {
+    body { margin: 12px; }
+    form input, form select, fieldset { width: 100%; }
+}
