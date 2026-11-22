@@ -12,7 +12,7 @@ RUN apt-get update \
 COPY Project/public/ /var/www/html/
 COPY Project/schema.sql /app/
 COPY Project/seed.sql /app/
-COPY docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
+COPY Project/docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
 RUN chmod +x /usr/local/bin/docker-entrypoint.sh
 
 # Render sets PORT (10000 by default); the entrypoint points Apache at it.
