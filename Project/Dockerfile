@@ -9,9 +9,9 @@ RUN apt-get update \
  && echo "ServerName localhost" > /etc/apache2/conf-available/servername.conf \
  && a2enconf servername
 
-COPY public/ /var/www/html/
-COPY schema.sql /app/
-COPY seed.sql /app/
+COPY Project/public/ /var/www/html/
+COPY Project/schema.sql /app/
+COPY Project/seed.sql /app/
 COPY docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
 RUN chmod +x /usr/local/bin/docker-entrypoint.sh
 

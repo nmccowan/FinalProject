@@ -10,7 +10,7 @@ services:
     name: personal-library
     runtime: docker
     plan: free
-    dockerfilePath: ./Dockerfile
+    dockerfilePath: ./Project/Dockerfile
     healthCheckPath: /
     envVars:
       - key: DATABASE_URL
