@@ -29,6 +29,28 @@ header#authBar {
     min-width: 150px;
 }
 
+#authGuestControls {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    width: 100%;
+}
+
+#btnToggleAuth {
+    background: rgb(72, 97, 219);
+    color: white;
+}
+
+#authPanel {
+    width: 100%;
+    max-width: 360px;
+    margin-top: 10px;
+}
+
+#btnCloseAuth {
+    float: right;
+}
+
 #registerPanel {
     width: 100%;
     margin-top: 10px;

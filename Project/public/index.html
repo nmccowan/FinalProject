@@ -11,33 +11,34 @@
     <body>
         <header id="authBar">
             <div id="authGuestControls">
-                <form id="loginForm">
-                    <label for="loginUsername">Username or Email</label>
-                    <input id="loginUsername" name="login" type="text" required>
-                    <label for="loginPassword">Password</label>
-                    <input id="loginPassword" name="password" type="password" required>
-                    <button type="submit">Log In</button>
-                    <button type="button" id="btnShowRegister">Register</button>
-                </form>
+                <button type="button" id="btnToggleAuth">Log In</button>
 
-                <section id="registerPanel" class="card hidden" aria-label="Create Account">
-                    <h2>Create Account</h2>
-                    <form id="registerForm">
-                        <label for="regUsername">Username</label>
-                        <input id="regUsername" name="username" type="text" minlength="3" required>
-
-                        <label for="regEmail">Email</label>
-                        <input id="regEmail" name="email" type="email" required>
-
-                        <label for="regPassword">Password</label>
-                        <input id="regPassword" name="password" type="password" minlength="8" required>
-
-                        <label for="regYearlyGoal">Yearly Reading Goal</label>
-                        <input id="regYearlyGoal" name="yearly_goal" type="number" min="1" max="500" value="20" required>
-
-                        <button type="submit">Create Account</button>
+                <div id="authPanel" class="card hidden">
+                    <button type="button" id="btnCloseAuth">Close</button>
+                    <form id="loginForm">
+                        <label for="loginUsername">Username or Email</label>
+                        <input id="loginUsername" name="login" type="text" required>
+                        <label for="loginPassword">Password</label>
+                        <input id="loginPassword" name="password" type="password" required>
+                        <button type="submit">Log In</button>
+                        <button type="button" id="btnShowRegister">Register</button>
                     </form>
-                </section>
+
+                    <section id="registerPanel" class="card hidden" aria-label="Create Account">
+                        <h2>Create Account</h2>
+                        <form id="registerForm">
+                            <label for="regUsername">Username</label>
+                            <input id="regUsername" name="username" type="text" minlength="3" required>
+                            <label for="regEmail">Email</label>
+                            <input id="regEmail" name="email" type="email" required>
+                            <label for="regPassword">Password</label>
+                            <input id="regPassword" name="password" type="password" minlength="8" required>
+                            <label for="regYearlyGoal">Yearly Reading Goal</label>
+                            <input id="regYearlyGoal" name="yearly_goal" type="number" min="1" max="500" value="20" required>
+                            <button type="submit">Create Account</button>
+                        </form>
+                    </section>
+                </div>
             </div>
 
             <div id="authUserControls" class="hidden">
@@ -99,13 +100,10 @@
                 <form id="bookForm">
                     <label for="bookTitle">Title</label>
                     <input id="bookTitle" name="title" type="text" required>
-
                     <label for="bookAuthor">Author</label>
                     <input id="bookAuthor" name="author" type="text" required>
-
                     <label for="bookPages">Pages</label>
                     <input id="bookPages" name="pages" type="number" min="1" max="10000" required>
-                
                     <label for="bookYear">Published Year</label>
                     <input id="bookYear" name="published_year" type="number" min="1" max="2100">
 
@@ -131,7 +129,6 @@
                     <div id="readFields" class="hidden">
                         <label for="bookRating">Rating (1-5)</label>
                         <input id="bookRating" name="rating" type="number" min="1" max="5">
-
                         <label for="bookDateFinished">Date Finished</label>
                         <input id="bookDateFinished" name="date_finished" type="date">
                     </div>
