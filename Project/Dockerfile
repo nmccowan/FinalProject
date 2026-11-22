@@ -10,6 +10,8 @@ RUN apt-get update \
  && a2enconf servername
 
 COPY Project/public/ /var/www/html/
+COPY Project/Database.php /var/www/Database.php
+COPY Project/db.php /var/www/db.php
 COPY Project/schema.sql /app/
 COPY Project/seed.sql /app/
 COPY Project/docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
