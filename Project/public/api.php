@@ -1,95 +1,189 @@
 <?php
-// Single entry point: routes by HTTP method, returns JSON, maps errors to status codes.
+// Single entry point: routes by resource/action and HTTP method, returns JSON, maps errors to status codes.
 
-// Set headers for JSON response and cross-origin flexibility
 header('Content-Type: application/json');
-header('Access-Control-Allow-Origin: *');
-header('Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS');
-header('Access-Control-Allow-Headers: Content-Type');
+session_set_cookie_params(['httponly' => true, 'samesite' => 'Lax']);
+session_start();
 
-// Handle preflight requests
-if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
-    http_response_code(200);
-    exit();
+function requireLogin(): int {
+    if (empty($_SESSION['user_id'])) {
+        throw new Exception('Please log in.', 401);
+    }
+    return (int)$_SESSION['user_id'];
 }
 
 try {
-    // 1. Include database connection (provided db.php file)
-    require_once __DIR__ . '/db.php';
-    require_once __DIR__ . '/Database.php';
+    // 1. Include database connection
+    require_once __DIR__ . '/../db.php';
+    require_once __DIR__ . '/../Database.php';
     $pdo = (new Database())->connect();
 
-    // 2. Include all model classes
-    require_once __DIR__ . '/Student.php';
-    require_once __DIR__ . '/Course.php';
-    require_once __DIR__ . '/Prerequisite.php';
-    require_once __DIR__ . '/Enrollment.php';
+    // 2. Include repository classes (assumes Project/src/ is copied to /var/www/src/)
+    require_once __DIR__ . '/../src/GenreRepo.php';
+    require_once __DIR__ . '/../src/BookRepo.php';
+    require_once __DIR__ . '/../src/UserBookRepo.php';
+    require_once __DIR__ . '/../src/AuthRepo.php';
 
     $method = $_SERVER['REQUEST_METHOD'];
-    $table = $_GET['table'] ?? '';
-    $id = isset($_GET['id']) ? (int)$_GET['id'] : null;
-    $isTranscript = isset($_GET['transcript']) && $_GET['transcript'] === 'true';
+    $resource = $_GET['resource'] ?? ($_GET['table'] ?? ($_GET['action'] ?? ''));
+    $id = isset($_GET['id']) ? filter_var($_GET['id'], FILTER_VALIDATE_INT) : null;
 
-    // Helper to instantiate the correct class based on the table name
-    $getModel = function(string $tableName) use ($pdo) {
-        switch ($tableName) {
-            case 'students': return new Student($pdo);
-            case 'courses': return new Course($pdo);
-            case 'prerequisites': return new Prerequisite($pdo);
-            case 'enrollments': return new Enrollment($pdo);
-            default: throw new Exception("Invalid table specified.", 400);
-        }
-    };
+    if (isset($_GET['id']) && ($id === false || $id <= 0)) {
+        throw new Exception("Invalid record ID.", 400);
+    }
 
-    // 3. Handle Transcript Request
-    if ($isTranscript) {
-        $studentId = isset($_GET['student_id']) ? (int)$_GET['student_id'] : 0;
-        if ($studentId <= 0) {
-            throw new Exception("Valid student ID is required for transcripts.", 400);
+    $input = [];
+    if ($method === 'POST' || $method === 'PUT') {
+        $raw = file_get_contents('php://input');
+        if ($raw !== '' && $raw !== false) {
+            $input = json_decode($raw, true);
+            if (json_last_error() !== JSON_ERROR_NONE || !is_array($input)) {
+                throw new Exception("Invalid JSON input.", 400);
+            }
         }
-        $enrollmentModel = new Enrollment($pdo);
-        $courses = $enrollmentModel->getTranscript($studentId);
-        echo json_encode(['courses' => $courses]);
+    }
+
+    // 3. Auth & Goal actions
+    if ($resource === 'register') {
+        if ($method !== 'POST') {
+            throw new Exception("Method not allowed.", 405);
+        }
+        $authRepo = new AuthRepo($pdo);
+        $user = $authRepo->register($input);
+        session_regenerate_id(true);
+        $_SESSION['user_id'] = (int)$user['id'];
+        http_response_code(201);
+        echo json_encode(['user' => $user, 'message' => 'Account created successfully']);
         exit();
     }
 
-    if (empty($table)) {
-        throw new Exception("No table specified.", 400);
-    }
-
-    $model = $getModel($table);
-    $input = [];
-
-    if ($method === 'POST' || $method === 'PUT') {
-        $input = json_decode(file_get_contents('php://input'), true);
-
-        if (json_last_error() !== JSON_ERROR_NONE || !is_array($input)) {
-            throw new Exception("Invalid JSON input.", 400);
-        }
-    }
-    // 4. Route based on HTTP Method
-    switch ($method) {
-        case 'GET':
-            echo json_encode($model->getAll());
-            break;
-        case 'POST':
-            $newId = $model->create($input);
-            http_response_code(201);
-            echo json_encode(['id' => $newId, 'message' => 'Record created successfully']);
-            break;
-        case 'PUT':
-            if (!$id) throw new Exception("Record ID is required for updates.", 400);
-            $model->update($id, $input);
-            echo json_encode(['message' => 'Record updated successfully']);
-            break;
-        case 'DELETE':
-            if (!$id) throw new Exception("Record ID is required for deletion.", 400);
-            $model->delete($id);
-            echo json_encode(['message' => 'Record deleted successfully']);
-            break;
-        default:
+    if ($resource === 'login') {
+        if ($method !== 'POST') {
             throw new Exception("Method not allowed.", 405);
+        }
+        $authRepo = new AuthRepo($pdo);
+        $user = $authRepo->login($input);
+        session_regenerate_id(true);
+        $_SESSION['user_id'] = (int)$user['id'];
+        echo json_encode(['user' => $user, 'message' => 'Logged in successfully']);
+        exit();
     }
+
+    if ($resource === 'logout') {
+        if ($method !== 'POST') {
+            throw new Exception("Method not allowed.", 405);
+        }
+        $_SESSION = [];
+        session_destroy();
+        echo json_encode(['message' => 'Logged out successfully']);
+        exit();
+    }
+
+    if ($resource === 'me') {
+        if ($method !== 'GET') {
+            throw new Exception("Method not allowed.", 405);
+        }
+        if (empty($_SESSION['user_id'])) {
+            echo json_encode(['user' => null]);
+            exit();
+        }
+        $stmt = $pdo->prepare(
+            "SELECT id, username, email, yearly_goal, created_at FROM users WHERE id = ?"
+        );
+        $stmt->execute([(int)$_SESSION['user_id']]);
+        $user = $stmt->fetch() ?: null;
+        echo json_encode(['user' => $user]);
+        exit();
+    }
+
+    if ($resource === 'goal') {
+        if ($method !== 'PUT' && $method !== 'POST') {
+            throw new Exception("Method not allowed.", 405);
+        }
+        $userId = requireLogin();
+        $yearlyGoal = filter_var($input['yearly_goal'] ?? null, FILTER_VALIDATE_INT);
+
+        if ($yearlyGoal === false) {
+            throw new Exception("Valid yearly_goal is required.", 400);
+        }
+
+        $authRepo = new AuthRepo($pdo);
+        $user = $authRepo->updateGoal($userId, (int)$yearlyGoal);
+        echo json_encode(['user' => $user, 'message' => 'Yearly goal updated successfully']);
+        exit();
+    }
+
+    // 4. Genres endpoint (read-only)
+    if ($resource === 'genres') {
+        if ($method !== 'GET') {
+            throw new Exception("Method not allowed.", 405);
+        }
+        $genreRepo = new GenreRepo($pdo);
+        echo json_encode($genreRepo->getAll());
+        exit();
+    }
+
+    // 5. Books endpoint (GET catalog; POST requires login and creates/shelves book)
+    if ($resource === 'books') {
+        $bookRepo = new BookRepo($pdo);
+        switch ($method) {
+            case 'GET':
+                $filters = [
+                    'search'   => $_GET['search'] ?? '',
+                    'genre_id' => $_GET['genre_id'] ?? '',
+                ];
+                echo json_encode($bookRepo->getAll($filters));
+                break;
+            case 'POST':
+                $userId = requireLogin();
+                $result = $bookRepo->createAndShelve($userId, $input);
+                http_response_code(201);
+                echo json_encode($result + ['message' => 'Book saved to shelf successfully']);
+                break;
+            default:
+                throw new Exception("Method not allowed.", 405);
+        }
+        exit();
+    }
+
+    // 6. User books / shelves endpoint (requires login)
+    if ($resource === 'user_books' || $resource === 'shelves') {
+        $userId = requireLogin();
+        $userBookRepo = new UserBookRepo($pdo);
+        switch ($method) {
+            case 'GET':
+                $filters = [
+                    'status'   => $_GET['status'] ?? 'all',
+                    'search'   => $_GET['search'] ?? '',
+                    'genre_id' => $_GET['genre_id'] ?? '',
+                    'sort'     => $_GET['sort'] ?? 'added',
+                    'page'     => $_GET['page'] ?? 1,
+                    'per_page' => $_GET['per_page'] ?? 10,
+                ];
+                echo json_encode($userBookRepo->getAll($userId, $filters));
+                break;
+            case 'POST':
+                $newId = $userBookRepo->create($userId, $input);
+                http_response_code(201);
+                echo json_encode(['id' => $newId, 'message' => 'Shelf entry created successfully']);
+                break;
+            case 'PUT':
+                if (!$id) throw new Exception("Record ID is required for updates.", 400);
+                $userBookRepo->update((int)$id, $userId, $input);
+                echo json_encode(['message' => 'Shelf entry updated successfully']);
+                break;
+            case 'DELETE':
+                if (!$id) throw new Exception("Record ID is required for deletion.", 400);
+                $userBookRepo->delete((int)$id, $userId);
+                echo json_encode(['message' => 'Shelf entry deleted successfully']);
+                break;
+            default:
+                throw new Exception("Method not allowed.", 405);
+        }
+        exit();
+    }
+
+    throw new Exception("Invalid or missing resource.", 400);
 } catch (PDOException $e) {
     error_log("Database Error: " . $e->getMessage());
 
@@ -103,7 +197,7 @@ try {
         echo json_encode(['error' => 'This record is still being used by another record.']);
     } else {
         http_response_code(500);
-        echo json_encode(['error' => 'A database error occurred. Please try again.']);
+        echo json_encode(['error' => 'A server error occurred.']);
     }
 } catch (Exception $e) {
     $code = $e->getCode();
@@ -113,9 +207,9 @@ try {
     }
     http_response_code($code);
     error_log("API Error: " . $e->getMessage());
-    echo json_encode(['error' => $e->getMessage()]);
+    echo json_encode(['error' => $code >= 500 ? 'A server error occurred.' : $e->getMessage()]);
 } catch (Throwable $e) {
     error_log("Unexpected API Error: " . $e->getMessage());
     http_response_code(500);
-    echo json_encode(['error' => 'An unexpected server error occurred.']);
+    echo json_encode(['error' => 'A server error occurred.']);
 }

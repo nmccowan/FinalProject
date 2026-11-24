@@ -9,6 +9,7 @@ RUN apt-get update \
  && echo "ServerName localhost" > /etc/apache2/conf-available/servername.conf \
  && a2enconf servername
 
+COPY Project/src/ /var/www/src/
 COPY Project/public/ /var/www/html/
 COPY Project/Database.php /var/www/Database.php
 COPY Project/db.php /var/www/db.php
