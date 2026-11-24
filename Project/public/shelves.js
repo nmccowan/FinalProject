@@ -189,7 +189,7 @@ export function initShelves({ onStatus, onBooksUpdated }) {
 
         const pageLabel = document.createElement('span');
         pageLabel.textContent = ` Page ${page} of ${totalPages} `;
-        pageLabel.style.margin = '0 8px';
+        pageLabel.className = 'pageLabel';
         const nextBtn = document.createElement('button');
         nextBtn.type = 'button';
         nextBtn.textContent = 'Next';
@@ -363,8 +363,15 @@ export function initShelves({ onStatus, onBooksUpdated }) {
                 per_page: perPage,
             });
             total = Number(data?.total) || 0;
+
+            if ((data?.items || []).length === 0 && page > 1) {
+                page -= 1;
+                return loadShelf();
+            }
+
             renderBooksTable(data?.items || []);
             renderPagination();
+
         } catch (err) {
             onStatus?.('error', err.message || 'Failed to load shelf.');
         }

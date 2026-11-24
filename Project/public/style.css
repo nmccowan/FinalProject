@@ -129,6 +129,10 @@ table {
     overflow-x: auto;
 }
 
+.pageLabel {
+    margin: 0 8px;
+}
+
 th, td {
     text-align: left;
     padding: 10px;
