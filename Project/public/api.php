@@ -23,6 +23,7 @@ try {
     require_once __DIR__ . '/../src/BookRepo.php';
     require_once __DIR__ . '/../src/UserBookRepo.php';
     require_once __DIR__ . '/../src/AuthRepo.php';
+    require_once __DIR__ . '/../src/recService.php';
 
     $method = $_SERVER['REQUEST_METHOD'];
     $resource = $_GET['resource'] ?? ($_GET['table'] ?? ($_GET['action'] ?? ''));
@@ -109,7 +110,11 @@ try {
 
         $authRepo = new AuthRepo($pdo);
         $user = $authRepo->updateGoal($userId, (int)$yearlyGoal);
-        echo json_encode(['user' => $user, 'message' => 'Yearly goal updated successfully']);
+        echo json_encode([
+            'user' => $user,
+            'yearly_goal' => (int)($user['yearly_goal'] ?? $yearlyGoal),
+            'message' => 'Yearly goal updated successfully',
+        ]);
         exit();
     }
 
@@ -180,6 +185,50 @@ try {
             default:
                 throw new Exception("Method not allowed.", 405);
         }
+        exit();
+    }
+
+    // 7. Recommendations ("What's Next") endpoint (requires login)
+    if ($resource === 'recommendations') {
+        if ($method !== 'GET') {
+            throw new Exception("Method not allowed.", 405);
+        }
+        $userId = requireLogin();
+        $recService = new recService($pdo);
+        echo json_encode($recService->getRecommendations($userId));
+        exit();
+    }
+
+    // 8. Reading stats endpoint (requires login)
+    if ($resource === 'stats') {
+        if ($method !== 'GET') {
+            throw new Exception("Method not allowed.", 405);
+        }
+        $userId = requireLogin();
+        $goalStmt = $pdo->prepare("SELECT yearly_goal FROM users WHERE id = ?");
+        $goalStmt->execute([$userId]);
+        $userRow = $goalStmt->fetch();
+        if (!$userRow) {
+            throw new Exception("User not found.", 404);
+        }
+
+        $datesStmt = $pdo->prepare(
+            "SELECT date_finished
+             FROM user_books
+             WHERE user_id = ? AND status = 'read' AND date_finished IS NOT NULL
+             ORDER BY date_finished ASC"
+        );
+        $datesStmt->execute([$userId]);
+        $finishedDates = array_map(
+            fn($row) => $row['date_finished'],
+            $datesStmt->fetchAll()
+        );
+
+        echo json_encode([
+            'yearly_goal'    => (int)$userRow['yearly_goal'],
+            'finished_count' => count($finishedDates),
+            'finished_dates' => $finishedDates,
+        ]);
         exit();
     }
 
