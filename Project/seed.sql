@@ -1,7 +1,7 @@
--- Demo account password (for local/demo seed only): Demo123!
+-- Demo account password (for local/demo seed only): password
 -- Generate your own hash with PHP's password_hash() and test it with password_verify() once the login code exists.-- 
 INSERT INTO users (username, email, password_hash, yearly_goal) VALUES
-  ('demo', 'demo@example.com', '$2b$10$nhMk6qWdQRP6aDv97XmtGOQV3/un9XxScNgin9/Whcn1WTDsi4uaa', 15)
+  ('demo', 'demo@example.com', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 15)
 ON CONFLICT DO NOTHING;
 
 INSERT INTO genres (name) VALUES 
