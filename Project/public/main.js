@@ -89,22 +89,3 @@ document.addEventListener('DOMContentLoaded', async () => {
     await shelvesController.loadGenres();
     await authController.checkSession();
 });
-
-document.addEventListener('DOMContentLoaded', async () => {
-    switchMainView('shelves');
-
-    const shelvesController = initShelves({
-        onStatus: showStatus,
-        onBooksUpdated: () => {},
-    });
-
-    const authController = initAuth({
-        onStatus: showStatus,
-        onAuthChange: (user) => {
-            shelvesController.setUser(user);
-        },
-    });
-
-    await shelvesController.loadGenres();
-    await authController.checkSession();
-});
