@@ -2,7 +2,14 @@
 // Single entry point: routes by resource/action and HTTP method, returns JSON, maps errors to status codes.
 
 header('Content-Type: application/json');
-session_set_cookie_params(['httponly' => true, 'samesite' => 'Lax']);
+
+$isHttps = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off')
+    || (($_SERVER['HTTP_X_FORWARDED_PROTO'] ?? '') === 'https');
+session_set_cookie_params([
+    'httponly' => true,
+    'samesite' => 'Lax',
+    'secure' => $isHttps,
+]);
 session_start();
 
 function requireLogin(): int {
@@ -18,7 +25,8 @@ try {
     require_once __DIR__ . '/../Database.php';
     $pdo = (new Database())->connect();
 
-    // 2. Include repository classes (assumes Project/src/ is copied to /var/www/src/)
+    // 2. Include validators, repositories, and services (assumes Project/src/ is copied to /var/www/src/)
+    require_once __DIR__ . '/../src/validShelf.php';
     require_once __DIR__ . '/../src/GenreRepo.php';
     require_once __DIR__ . '/../src/BookRepo.php';
     require_once __DIR__ . '/../src/UserBookRepo.php';
@@ -88,12 +96,8 @@ try {
             echo json_encode(['user' => null]);
             exit();
         }
-        $stmt = $pdo->prepare(
-            "SELECT id, username, email, yearly_goal, created_at FROM users WHERE id = ?"
-        );
-        $stmt->execute([(int)$_SESSION['user_id']]);
-        $user = $stmt->fetch() ?: null;
-        echo json_encode(['user' => $user]);
+        $authRepo = new AuthRepo($pdo);
+        echo json_encode(['user' => $authRepo->findById((int)$_SESSION['user_id'])]);
         exit();
     }
 
@@ -158,11 +162,11 @@ try {
         switch ($method) {
             case 'GET':
                 $filters = [
-                    'status'   => $_GET['status'] ?? 'all',
-                    'search'   => $_GET['search'] ?? '',
+                    'status' => $_GET['status'] ?? 'all',
+                    'search' => $_GET['search'] ?? '',
                     'genre_id' => $_GET['genre_id'] ?? '',
-                    'sort'     => $_GET['sort'] ?? 'added',
-                    'page'     => $_GET['page'] ?? 1,
+                    'sort' => $_GET['sort'] ?? 'added',
+                    'page' => $_GET['page'] ?? 1,
                     'per_page' => $_GET['per_page'] ?? 10,
                 ];
                 echo json_encode($userBookRepo->getAll($userId, $filters));
@@ -205,27 +209,17 @@ try {
             throw new Exception("Method not allowed.", 405);
         }
         $userId = requireLogin();
-        $goalStmt = $pdo->prepare("SELECT yearly_goal FROM users WHERE id = ?");
-        $goalStmt->execute([$userId]);
-        $userRow = $goalStmt->fetch();
+        $authRepo = new AuthRepo($pdo);
+        $userRow = $authRepo->findById($userId);
         if (!$userRow) {
             throw new Exception("User not found.", 404);
         }
 
-        $datesStmt = $pdo->prepare(
-            "SELECT date_finished
-             FROM user_books
-             WHERE user_id = ? AND status = 'read' AND date_finished IS NOT NULL
-             ORDER BY date_finished ASC"
-        );
-        $datesStmt->execute([$userId]);
-        $finishedDates = array_map(
-            fn($row) => $row['date_finished'],
-            $datesStmt->fetchAll()
-        );
+        $userBookRepo = new UserBookRepo($pdo);
+        $finishedDates = $userBookRepo->getFinishedDates($userId);
 
         echo json_encode([
-            'yearly_goal'    => (int)$userRow['yearly_goal'],
+            'yearly_goal' => (int)$userRow['yearly_goal'],
             'finished_count' => count($finishedDates),
             'finished_dates' => $finishedDates,
         ]);

@@ -1,13 +1,12 @@
 <?php
 class UserBookRepo {
     private PDO $db;
-    private array $validStatuses = ['tbr', 'reading', 'read', 'wishlist'];
     private array $sorts = [
-        'added'  => 'ub.date_added DESC',
-        'title'  => 'b.title ASC',
+        'added' => 'ub.date_added DESC',
+        'title' => 'b.title ASC',
         'author' => 'a.name ASC',
         'rating' => 'ub.rating DESC NULLS LAST',
-        'pages'  => 'b.pages ASC',
+        'pages' => 'b.pages ASC',
     ];
 
     public function __construct(PDO $db) {
@@ -28,9 +27,7 @@ class UserBookRepo {
         $params = [$userId];
 
         if ($status !== null && $status !== '' && $status !== 'all') {
-            if (!in_array($status, $this->validStatuses, true)) {
-                throw new Exception("Invalid shelf status provided.", 400);
-            }
+            $status = validShelf::validateStatus((string)$status, true);
             $where[] = "ub.status = ?";
             $params[] = $status;
         }
@@ -63,6 +60,7 @@ class UserBookRepo {
         $countStmt->execute($params);
         $total = (int)$countStmt->fetchColumn();
         $offset = ($page - 1) * $perPage;
+
         $sql = "SELECT ub.id, ub.user_id, ub.book_id, ub.status, ub.rating,
                        ub.date_added, ub.date_started, ub.date_finished,
                        b.title, a.name AS author, b.pages, b.published_year,
@@ -84,18 +82,37 @@ class UserBookRepo {
                 JOIN books b ON ub.book_id = b.id
                 JOIN authors a ON b.author_id = a.id"
                 . $whereSql
-                . " ORDER BY {$orderBy}, ub.id ASC LIMIT {$perPage} OFFSET {$offset}";
+                . " ORDER BY {$orderBy}, ub.id ASC LIMIT :limit OFFSET :offset";
 
         $stmt = $this->db->prepare($sql);
-        $stmt->execute($params);
+        foreach ($params as $idx => $val) {
+            $stmt->bindValue($idx + 1, $val);
+        }
+        $stmt->bindValue(':limit', $perPage, PDO::PARAM_INT);
+        $stmt->bindValue(':offset', $offset, PDO::PARAM_INT);
+        $stmt->execute();
         $rows = $stmt->fetchAll();
 
         return [
-            'items'    => $rows,
-            'total'    => $total,
-            'page'     => $page,
+            'items' => $rows,
+            'total' => $total,
+            'page' => $page,
             'per_page' => $perPage,
         ];
+    }
+
+    public function getFinishedDates(int $userId): array {
+        $stmt = $this->db->prepare(
+            "SELECT date_finished
+             FROM user_books
+             WHERE user_id = ? AND status = 'read' AND date_finished IS NOT NULL
+             ORDER BY date_finished ASC"
+        );
+        $stmt->execute([$userId]);
+        return array_map(
+            fn($row) => $row['date_finished'],
+            $stmt->fetchAll()
+        );
     }
 
     public function create(int $userId, array $data): int {
@@ -114,7 +131,7 @@ class UserBookRepo {
             throw new Exception("Shelf entry not found.", 404);
         }
 
-        [$status, $rating, $dateStarted, $dateFinished] = $this->validateUpdate($data);
+        [$status, $rating, $dateStarted, $dateFinished] = ShelfValidator::validateShelfFields($data, true);
         $stmt = $this->db->prepare(
             "UPDATE user_books
              SET status = ?, rating = ?, date_started = ?, date_finished = ?
@@ -152,18 +169,6 @@ class UserBookRepo {
         }
     }
 
-    private function parseDate(?string $value, string $label): ?string {
-        if ($value === null || trim($value) === '') {
-            return null;
-        }
-        $trimmed = trim($value);
-        $dt = DateTime::createFromFormat('!Y-m-d', $trimmed);
-        if (!$dt || $dt->format('Y-m-d') !== $trimmed) {
-            throw new Exception("Invalid {$label} date (expected YYYY-MM-DD).", 400);
-        }
-        return $dt->format('Y-m-d');
-    }
-
     private function validateCreate(int $userId, array $data): array {
         $bookId = filter_var($data['book_id'] ?? null, FILTER_VALIDATE_INT);
         if ($userId <= 0 || $bookId === false || $bookId <= 0) {
@@ -174,41 +179,7 @@ class UserBookRepo {
             throw new Exception("Book not found.", 404);
         }
 
-        [$status, $rating, $dateStarted, $dateFinished] = $this->validateUpdate($data);
+        [$status, $rating, $dateStarted, $dateFinished] = validShelf::validateShelfFields($data, true);
         return [(int)$bookId, $status, $rating, $dateStarted, $dateFinished];
-    }
-
-    private function validateUpdate(array $data): array {
-        $status = trim((string)($data['status'] ?? ''));
-
-        if ($status === '') {
-            throw new Exception("Status is required.", 400);
-        }
-
-        if (!in_array($status, $this->validStatuses, true)) {
-            throw new Exception("Status must be one of: tbr, reading, read, or wishlist.", 400);
-        }
-
-        $rating = null;
-        if (isset($data['rating']) && $data['rating'] !== '') {
-            $parsedRating = filter_var($data['rating'], FILTER_VALIDATE_INT);
-            if ($parsedRating === false || $parsedRating < 1 || $parsedRating > 5) {
-                throw new Exception("Rating must be a whole number between 1 and 5.", 400);
-            }
-            $rating = (int)$parsedRating;
-        }
-
-        $dateStarted = $this->parseDate($data['date_started'] ?? null, 'start');
-        $dateFinished = $this->parseDate($data['date_finished'] ?? null, 'finish');
-
-        if ($status !== 'read' && ($rating !== null || $dateFinished !== null)) {
-            throw new Exception("Rating and finish date are only allowed when status is 'read'.", 400);
-        }
-
-        if ($dateStarted !== null && $dateFinished !== null && $dateFinished < $dateStarted) {
-            throw new Exception("Finish date cannot be before start date.", 400);
-        }
-
-        return [$status, $rating, $dateStarted, $dateFinished];
     }
 }

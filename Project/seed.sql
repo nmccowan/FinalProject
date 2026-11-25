@@ -11,7 +11,7 @@ ON CONFLICT DO NOTHING;
 
 
 INSERT INTO authors (name) VALUES 
-    ('Suzanne Collins'), ('Madeline Miller'), ('Bram Stoker'), ('Gillian Flynn'), ('Stephen King'), ('Daphne du Maurier'), ('Natalie Haynes'), ('Richard Osman'), ('Laura Elliot'), ('Mary Renault'), ('Caroline Kepnes')
+    ('Suzanne Collins'), ('Madeline Miller'), ('Bram Stoker'), ('Gillian Flynn'), ('Stephen King'), ('Daphne du Maurier'), ('Natalie Haynes'), ('Richard Osman'), ('Laura Elliot'), ('Mary Renault'), ('Caroline Kepnes'),
     ('Michelle Obama'), ('Ashley Flowers'), ('J.K. Rowling'), ('Rick Riordan'), ('Alex Michaelides'), ('Jennifer Saint'), ('Costanza Casati'), ('John Green'), ('Pierce Brown'), ('Lynn Weingarten'), ('Claire Heywood')
 ON CONFLICT DO NOTHING;
 

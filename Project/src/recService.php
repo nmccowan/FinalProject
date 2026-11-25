@@ -1,5 +1,5 @@
 <?php
-class RecommendationService {
+class recService {
     private PDO $db;
 
     public function __construct(PDO $db) {
@@ -40,9 +40,9 @@ class RecommendationService {
 
         usort($favoriteGenres, fn($a, $b) => $b['weight'] <=> $a['weight']);
 
-        // 2. Average pages of completed books + overall average rating
+        // 2. Average pages of completed ('read') books + overall average rating
         $statsStmt = $this->db->prepare(
-            "SELECT AVG(b.pages) AS avg_pages,
+            "SELECT AVG(b.pages) FILTER (WHERE ub.status = 'read') AS avg_pages,
                     AVG(ub.rating) AS avg_rating,
                     COUNT(*) FILTER (WHERE ub.status = 'read') AS total_read
              FROM user_books ub

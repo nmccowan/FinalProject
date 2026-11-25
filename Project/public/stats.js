@@ -8,7 +8,7 @@ export function initStats({ onStatus, onGoalUpdated }) {
     const paceForecastContainer = document.getElementById('paceForecastContainer');
     const goalForm = document.getElementById('goalForm');
     const goalInput = document.getElementById('yearlyGoal');
-
+    
     let loggedIn = false;
     let currentGoal = 20;
 
@@ -37,8 +37,9 @@ export function initStats({ onStatus, onGoalUpdated }) {
         const items = [
             `Year: ${forecast.year}`,
             `Completed this year: ${forecast.completedInYear} / ${forecast.goal} books (${forecast.booksRemaining} remaining)`,
-            `Current pace: ${forecast.currentMonthlyPace} books/month (projected ${forecast.projectedTotal} by year-end)`,
-            `Needed pace for rest of year: ${forecast.neededMonthlyPace} books/month`,
+            `Current pace: ${forecast.currentMonthlyPace} books/mo (recent 3-mo weighted: ${forecast.recentWeightedMonthlyPace}/mo)`,
+            `Projected year-end total: ${forecast.projectedTotal} books (range: ${forecast.projectedLow}–${forecast.projectedHigh})`,
+            `Needed pace for remaining ${forecast.monthsRemaining} mo: ${forecast.neededMonthlyPace} books/mo`,
             `Status: ${forecast.statusLabel}`,
         ];
 
@@ -57,24 +58,26 @@ export function initStats({ onStatus, onGoalUpdated }) {
 
         const svgNs = 'http://www.w3.org/2000/svg';
         const width = 640;
-        const height = 260;
+        const height = 280;
         const padLeft = 40;
-        const padRight = 20;
-        const padTop = 24;
-        const padBottom = 42;
+        const padRight = 24;
+        const padTop = 28;
+        const padBottom = 44;
         const plotW = width - padLeft - padRight;
         const plotH = height - padTop - padBottom;
         const counts = forecast.monthlyCounts;
-        const maxCount = Math.max(4, ...counts);
-        const slotWidth = plotW / counts.length;
-        const barWidth = Math.max(14, slotWidth * 0.58);
-
+        const cum = forecast.cumulativeByMonth;
+        const proj = forecast.projectedCumulativeByMonth;
+        const maxVal = Math.max(4, forecast.goal, ...counts, ...cum, ...proj);
+        const xCenter = (idx) => padLeft + (plotW / 12) * idx + (plotW / 12) / 2;
+        const yPos = (val) => padTop + plotH - (Math.max(0, val) / maxVal) * plotH;
         const svg = document.createElementNS(svgNs, 'svg');
         svg.setAttribute('viewBox', `0 0 ${width} ${height}`);
         svg.setAttribute('class', 'stats-chart-svg');
         svg.setAttribute('role', 'img');
-        svg.setAttribute('aria-label', `Monthly books finished in ${forecast.year}`);
+        svg.setAttribute('aria-label', `Monthly books and cumulative forecast in ${forecast.year}`);
 
+        // Baseline axis
         const axis = document.createElementNS(svgNs, 'line');
         axis.setAttribute('class', 'stats-axis');
         axis.setAttribute('x1', String(padLeft));
@@ -83,36 +86,78 @@ export function initStats({ onStatus, onGoalUpdated }) {
         axis.setAttribute('y2', String(padTop + plotH));
         svg.appendChild(axis);
 
-        counts.forEach((count, idx) => {
-            const barHeight = (count / maxCount) * plotH;
-            const x = padLeft + idx * slotWidth + (slotWidth - barWidth) / 2;
-            const y = padTop + plotH - barHeight;
+        // Goal horizontal reference line
+        const goalY = yPos(forecast.goal);
+        const goalLine = document.createElementNS(svgNs, 'line');
+        goalLine.setAttribute('x1', String(padLeft));
+        goalLine.setAttribute('y1', String(goalY));
+        goalLine.setAttribute('x2', String(width - padRight));
+        goalLine.setAttribute('y2', String(goalY));
+        goalLine.setAttribute('stroke', 'rgb(72, 97, 219)');
+        goalLine.setAttribute('stroke-width', '1.5');
+        goalLine.setAttribute('stroke-dasharray', '5 4');
+        svg.appendChild(goalLine);
+        const goalLabel = document.createElementNS(svgNs, 'text');
+        goalLabel.setAttribute('class', 'stats-label');
+        goalLabel.setAttribute('x', String(width - padRight - 2));
+        goalLabel.setAttribute('y', String(Math.max(12, goalY - 5)));
+        goalLabel.setAttribute('text-anchor', 'end');
+        goalLabel.textContent = `Goal: ${forecast.goal}`;
+        svg.appendChild(goalLabel);
 
+        // Monthly bars + month labels
+        const slotWidth = plotW / 12;
+        const barWidth = Math.max(14, slotWidth * 0.52);
+
+        counts.forEach((count, idx) => {
+            const cx = xCenter(idx);
+            const y = yPos(count);
+            const barHeight = Math.max(0, padTop + plotH - y);
             const rect = document.createElementNS(svgNs, 'rect');
             rect.setAttribute('class', count > 0 ? 'stats-bar stats-bar--active' : 'stats-bar');
-            rect.setAttribute('x', String(x));
+            rect.setAttribute('x', String(cx - barWidth / 2));
             rect.setAttribute('y', String(y));
             rect.setAttribute('width', String(barWidth));
             rect.setAttribute('height', String(barHeight));
             rect.setAttribute('rx', '3');
             svg.appendChild(rect);
-
-            if (count > 0) {
-                const countText = document.createElementNS(svgNs, 'text');
-                countText.setAttribute('class', 'stats-label');
-                countText.setAttribute('x', String(x + barWidth / 2));
-                countText.setAttribute('y', String(Math.max(12, y - 4)));
-                countText.textContent = String(count);
-                svg.appendChild(countText);
-            }
-
             const monthText = document.createElementNS(svgNs, 'text');
             monthText.setAttribute('class', 'stats-label');
-            monthText.setAttribute('x', String(x + barWidth / 2));
+            monthText.setAttribute('x', String(cx));
             monthText.setAttribute('y', String(padTop + plotH + 18));
             monthText.textContent = MONTH_LABELS[idx];
             svg.appendChild(monthText);
         });
+
+        // Cumulative actual line (through elapsed months)
+        const elapsedIdx = Math.max(0, forecast.monthsElapsed - 1);
+        const actualPoints = [];
+        for (let i = 0; i <= elapsedIdx; i++) {
+            actualPoints.push(`${xCenter(i)},${yPos(cum[i])}`);
+        }
+        if (actualPoints.length > 1) {
+            const actualLine = document.createElementNS(svgNs, 'polyline');
+            actualLine.setAttribute('fill', 'none');
+            actualLine.setAttribute('stroke', '#1e7e34');
+            actualLine.setAttribute('stroke-width', '2.5');
+            actualLine.setAttribute('points', actualPoints.join(' '));
+            svg.appendChild(actualLine);
+        }
+
+        // Projected cumulative line (from current month through December)
+        const projPoints = [];
+        for (let i = elapsedIdx; i < 12; i++) {
+            projPoints.push(`${xCenter(i)},${yPos(proj[i])}`);
+        }
+        if (projPoints.length > 1) {
+            const projLine = document.createElementNS(svgNs, 'polyline');
+            projLine.setAttribute('fill', 'none');
+            projLine.setAttribute('stroke', '#c5221f');
+            projLine.setAttribute('stroke-width', '2');
+            projLine.setAttribute('stroke-dasharray', '3 3');
+            projLine.setAttribute('points', projPoints.join(' '));
+            svg.appendChild(projLine);
+        }
 
         paceForecastContainer.appendChild(svg);
     }
@@ -128,10 +173,8 @@ export function initStats({ onStatus, onGoalUpdated }) {
             const goal = Number(data?.yearly_goal ?? currentGoal) || 20;
             currentGoal = goal;
             setGoalInputValue(goal);
-
             const finishedDates = Array.isArray(data?.finished_dates) ? data.finished_dates : [];
             const forecast = calculatePaceForecast(finishedDates, goal);
-
             renderSummary(forecast);
             renderSvgChart(forecast);
         } catch (err) {

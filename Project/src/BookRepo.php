@@ -1,7 +1,6 @@
 <?php
 class BookRepo {
     private PDO $db;
-    private array $validStatuses = ['tbr', 'reading', 'read', 'wishlist'];
 
     public function __construct(PDO $db) {
         $this->db = $db;
@@ -57,12 +56,11 @@ class BookRepo {
         return $stmt->fetchAll();
     }
 
-    /**
-     * Find or create a catalog book, sync genres, and add/update the user's shelf entry in one transaction.
-     */
+    
+    //Find or create a catalog book, add any new genres, and add/update the user's shelf entry in one transaction.
     public function createAndShelve(int $userId, array $data): array {
         [$title, $authorName, $pages, $publishedYear, $genreIds] = $this->validateBook($data);
-        [$status, $rating, $dateStarted, $dateFinished] = $this->validateShelfFields($data);
+        [$status, $rating, $dateStarted, $dateFinished] = validShelf::validateShelfFields($data, false);
 
         $this->db->beginTransaction();
         try {
@@ -76,16 +74,11 @@ class BookRepo {
                 );
                 $stmt->execute([$title, $authorId, $pages, $publishedYear]);
                 $bookId = (int)$this->db->lastInsertId();
+                $this->addMissingGenres($bookId, $genreIds);
             } else {
-                $stmt = $this->db->prepare(
-                    "UPDATE books
-                     SET pages = ?, published_year = ?
-                     WHERE id = ?"
-                );
-                $stmt->execute([$pages, $publishedYear, $bookId]);
+                // Existing catalog book: keep shared pages/year intact and only add missing genres
+                $this->addMissingGenres($bookId, $genreIds);
             }
-
-            $this->syncBookGenres($bookId, $genreIds);
 
             $checkStmt = $this->db->prepare(
                 "SELECT id FROM user_books WHERE user_id = ? AND book_id = ?"
@@ -141,10 +134,7 @@ class BookRepo {
         return (int)$this->db->lastInsertId();
     }
 
-    private function syncBookGenres(int $bookId, array $genreIds): void {
-        $delStmt = $this->db->prepare("DELETE FROM book_genres WHERE book_id = ?");
-        $delStmt->execute([$bookId]);
-
+    private function addMissingGenres(int $bookId, array $genreIds): void {
         if (empty($genreIds)) {
             return;
         }
@@ -159,21 +149,6 @@ class BookRepo {
         }
     }
 
-    private function parseDate(?string $value, string $label): ?string {
-        if ($value === null || trim($value) === '') {
-            return null;
-        }
-        $trimmed = trim($value);
-        $dt = DateTime::createFromFormat('!Y-m-d', $trimmed);
-        if (!$dt || $dt->format('Y-m-d') !== $trimmed) {
-            throw new Exception("Invalid {$label} date (expected YYYY-MM-DD).", 400);
-        }
-        return $dt->format('Y-m-d');
-    }
-
-    /**
-     * @return array{0: string, 1: string, 2: int, 3: ?int, 4: int[]}
-     */
     private function validateBook(array $data): array {
         $title = trim((string)($data['title'] ?? ''));
         $author = trim((string)($data['author'] ?? ''));
@@ -225,37 +200,5 @@ class BookRepo {
         }
 
         return [$title, $author, $pages, $publishedYear, $genreIds];
-    }
-
-    /**
-     * @return array{0: string, 1: ?int, 2: ?string, 3: ?string}
-     */
-    private function validateShelfFields(array $data): array {
-        $status = trim((string)($data['status'] ?? 'tbr'));
-        if (!in_array($status, $this->validStatuses, true)) {
-            throw new Exception("Status must be one of: tbr, reading, read, or wishlist.", 400);
-        }
-
-        $rating = null;
-        if (isset($data['rating']) && $data['rating'] !== '') {
-            $parsedRating = filter_var($data['rating'], FILTER_VALIDATE_INT);
-            if ($parsedRating === false || $parsedRating < 1 || $parsedRating > 5) {
-                throw new Exception("Rating must be a whole number between 1 and 5.", 400);
-            }
-            $rating = $parsedRating;
-        }
-
-        $dateStarted = $this->parseDate($data['date_started'] ?? null, 'start');
-        $dateFinished = $this->parseDate($data['date_finished'] ?? null, 'finish');
-
-        if ($status !== 'read' && ($rating !== null || $dateFinished !== null)) {
-            throw new Exception("Rating and finish date are only allowed when status is 'read'.", 400);
-        }
-
-        if ($dateStarted !== null && $dateFinished !== null && $dateFinished < $dateStarted) {
-            throw new Exception("Finish date cannot be before start date.", 400);
-        }
-
-        return [$status, $rating, $dateStarted, $dateFinished];
     }
 }

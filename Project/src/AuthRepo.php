@@ -93,4 +93,16 @@ class AuthRepo {
         return $updated;
     }
 
+    public function findById(int $userId): ?array {
+        if ($userId <= 0) {
+            return null;
+        }
+        $stmt = $this->db->prepare(
+            "SELECT id, username, email, yearly_goal, created_at FROM users WHERE id = ?"
+        );
+        $stmt->execute([$userId]);
+        $user = $stmt->fetch();
+        return $user ?: null;
+    }
+
 }
