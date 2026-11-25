@@ -1,171 +1,158 @@
 <!DOCTYPE html>
 <html lang="en">
-    <head>
-        <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>Personal Library</title>
-        <link rel="stylesheet" href="style.css">
-        <script type="module" src="main.js"></script>
-    </head>
-
-    <body>
-        <header id="authBar">
-            <div id="authGuestControls">
-                <button type="button" id="btnToggleAuth">Log In</button>
-
-                <div id="authPanel" class="card hidden">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Personal Library</title>
+    <link rel="stylesheet" href="style.css">
+    <script type="module" src="main.js"></script>
+</head>
+<body>
+    <header id="authBar">
+        <div id="authGuestControls">
+            <button type="button" id="btnToggleAuth">Log In</button>
+            <div id="authPanel" class="card hidden">
+                <div class="panel-header">
                     <button type="button" id="btnCloseAuth">Close</button>
-                    <form id="loginForm">
-                        <label for="loginUsername">Username or Email</label>
-                        <input id="loginUsername" name="login" type="text" required>
-                        <label for="loginPassword">Password</label>
-                        <input id="loginPassword" name="password" type="password" required>
+                </div>
+                <form id="loginForm">
+                    <label for="loginUsername">Username or Email</label>
+                    <input id="loginUsername" name="login" type="text" autocomplete="username" required>
+                    <label for="loginPassword">Password</label>
+                    <input id="loginPassword" name="password" type="password" autocomplete="current-password" required>
+                    <div class="form-actions">
                         <button type="submit">Log In</button>
                         <button type="button" id="btnShowRegister">Register</button>
+                    </div>
+                </form>
+                <section id="registerPanel" class="card hidden" aria-label="Create Account">
+                    <h2>Create Account</h2>
+                    <form id="registerForm">
+                        <label for="regUsername">Username</label>
+                        <input id="regUsername" name="username" type="text" autocomplete="username" minlength="3" required>
+                        <label for="regEmail">Email</label>
+                        <input id="regEmail" name="email" type="email" autocomplete="email" required>
+                        <label for="regPassword">Password</label>
+                        <input id="regPassword" name="password" type="password" autocomplete="new-password" minlength="8" required>
+                        <label for="regYearlyGoal">Yearly Reading Goal</label>
+                        <input id="regYearlyGoal" name="yearly_goal" type="number" min="1" max="500" value="20" required>
+                        <button type="submit">Create Account</button>
                     </form>
-
-                    <section id="registerPanel" class="card hidden" aria-label="Create Account">
-                        <h2>Create Account</h2>
-                        <form id="registerForm">
-                            <label for="regUsername">Username</label>
-                            <input id="regUsername" name="username" type="text" minlength="3" required>
-                            <label for="regEmail">Email</label>
-                            <input id="regEmail" name="email" type="email" required>
-                            <label for="regPassword">Password</label>
-                            <input id="regPassword" name="password" type="password" minlength="8" required>
-                            <label for="regYearlyGoal">Yearly Reading Goal</label>
-                            <input id="regYearlyGoal" name="yearly_goal" type="number" min="1" max="500" value="20" required>
-                            <button type="submit">Create Account</button>
-                        </form>
-                    </section>
-                </div>
+                </section>
             </div>
-
-            <div id="authUserControls" class="hidden">
-                <span id="currentUserLabel"></span>
-                <button type="button" id="btnLogout">Log Out</button>
-            </div>
-        </header>
-
-        <!--Main Title-->
-        <h1>Personal Library</h1>
-
-        <!--Main Navigation-->
-        <nav class="navigationBar" aria-label="Main sections">
-            <button type="button" id="btnShelves" class="active" data-view="shelves">My Shelves</button>
-            <button type="button" id="btnAdd" data-view="add">Add Books</button>
-            <button type="button" id="btnNext" data-view="next">What's Next</button>
-            <button type="button" id="btnStats" data-view="stats">Reading Stats</button>
-        </nav>
-
-        <!--Status banner -->
-        <div id="loadingIndicator" class="loading hidden" role="status" aria-live="polite">
-            <span class="spinner" aria-hidden="true"></span>
-            <span>Loading...</span>
         </div>
+        <div id="authUserControls" class="hidden">
+            <span id="currentUserLabel"></span>
+            <button type="button" id="btnLogout">Log Out</button>
+        </div>
+    </header>
 
-        <div id="statusBanner" class="hidden" role="status" aria-live="polite"></div>
+    <h1>Personal Library</h1>
 
-        <main id="mainContent">
-            <!--Sub Navigation for Create and Manage-->
-            <section id="viewShelves" class="card">
-                <nav id="subNavigation" class="navigationBar" aria-label="Shelf filter">
-                    <button type="button" id="subAll" class="active" data-view="all">All</button>
-                    <button type="button" id="subTBR" data-view="tbr">To Be Read</button>
-                    <button type="button" id="subReading" data-view="reading">Reading</button>
-                    <button type="button" id="subRead" data-view="read">Read</button> 
-                    <button type="button" id="subWishlist" data-view="wishlist">Wishlist</button>       
-                </nav>
+    <nav class="navigationBar" aria-label="Main sections">
+        <button type="button" id="btnShelves" class="active" data-view="shelves">My Shelves</button>
+        <button type="button" id="btnAdd" data-view="add">Add Books</button>
+        <button type="button" id="btnNext" data-view="next">What's Next</button>
+        <button type="button" id="btnStats" data-view="stats">Reading Stats</button>
+    </nav>
 
-                <!--Shelves View-->
-                <div id="shelfData">
-                        <label for="shelfSearch">Search</label>
-                        <input id="shelfSearch" type="search" placeholder="Title or Author...">
-                        <label for="shelfGenreFilter">Genre</label>
-                        <select id="shelfGenreFilter">
-                            <option value="">All Genres</option>
-                        </select>
-                        <label for="shelfSort">Sort by</label>
-                        <select id="shelfSort">
-                            <option value="added">Recently added</option>
-                            <option value="title">Title</option>
-                            <option value="author">Author</option>
-                            <option value="rating">Rating</option>
-                            <option value="pages">Length</option>
-                        </select>
+    <div id="loadingIndicator" class="loading hidden" role="status" aria-live="polite">
+        <span class="spinner" aria-hidden="true"></span>
+        <span>Loading...</span>
+    </div>
+
+    <div id="statusBanner" class="hidden" role="status" aria-live="polite"></div>
+
+    <main id="mainContent">
+        <!-- Shelves View -->
+        <section id="viewShelves" class="card" aria-label="My Shelves">
+            <div id="subNavigation" class="navigationBar" role="group" aria-label="Shelf status filter">
+                <button type="button" id="subAll" class="active" data-view="all">All</button>
+                <button type="button" id="subTBR" data-view="tbr">To Be Read</button>
+                <button type="button" id="subReading" data-view="reading">Reading</button>
+                <button type="button" id="subRead" data-view="read">Read</button>
+                <button type="button" id="subWishlist" data-view="wishlist">Wishlist</button>
+            </div>
+            <div id="shelfData" class="shelf-controls">
+                <label for="shelfSearch">Search</label>
+                <input id="shelfSearch" type="search" placeholder="Title or Author...">
+                <label for="shelfGenreFilter">Genre</label>
+                <select id="shelfGenreFilter">
+                    <option value="">All Genres</option>
+                </select>
+                <label for="shelfSort">Sort by</label>
+                <select id="shelfSort">
+                    <option value="added">Recently added</option>
+                    <option value="title">Title</option>
+                    <option value="author">Author</option>
+                    <option value="rating">Rating</option>
+                    <option value="pages">Length</option>
+                </select>
+            </div>
+            <div id="editShelfContainer" class="hidden"></div>
+            <div id="tableWrapper" class="table-wrap">
+                <div id="shelvesTableContainer"></div>
+            </div>
+            <div id="shelfPagination"></div>
+        </section>
+
+        <!-- Add Book View -->
+        <section id="viewAdd" class="card hidden" aria-label="Add a Book to Catalog">
+            <h2>Add a Book to Catalog</h2>
+            <form id="bookForm">
+                <label for="bookTitle">Title</label>
+                <input id="bookTitle" name="title" type="text" required>
+                <label for="bookAuthor">Author</label>
+                <input id="bookAuthor" name="author" type="text" required>
+                <label for="bookPages">Pages</label>
+                <input id="bookPages" name="pages" type="number" min="1" max="10000" required>
+                <label for="bookYear">Published Year</label>
+                <input id="bookYear" name="published_year" type="number" min="1" max="2100">
+                <fieldset class="genre-fieldset">
+                    <legend>Genres</legend>
+                    <div id="bookGenresContainer" class="checkbox-grid"></div>
+                </fieldset>
+                <label for="bookStatus">Status</label>
+                <select id="bookStatus" name="status" required>
+                    <option value="tbr">To Be Read</option>
+                    <option value="reading">Reading</option>
+                    <option value="read">Read</option>
+                    <option value="wishlist">Wishlist</option>
+                </select>
+                <div id="startingField" class="hidden">
+                    <label for="bookDateStarted">Date Started</label>
+                    <input id="bookDateStarted" name="date_started" type="date">
                 </div>
-
-                <div id="editShelfContainer" class="hidden"></div>
-                <div id="tableWrapper" class="table-wrap">
-                    <div id="shelvesTableContainer"></div>
+                <div id="readFields" class="hidden">
+                    <label for="bookRating">Rating (1-5)</label>
+                    <input id="bookRating" name="rating" type="number" min="1" max="5">
+                    <label for="bookDateFinished">Date Finished</label>
+                    <input id="bookDateFinished" name="date_finished" type="date">
                 </div>
-                <div id="shelfPagination"></div>
-            </section>
+                <button type="submit">Save Book</button>
+            </form>
+        </section>
 
-            <!--Add Book View-->
-            <section id="viewAdd" class="card hidden">
-                <h2>Add a Book to Catalog</h2>
-                <form id="bookForm">
-                    <label for="bookTitle">Title</label>
-                    <input id="bookTitle" name="title" type="text" required>
-                    <label for="bookAuthor">Author</label>
-                    <input id="bookAuthor" name="author" type="text" required>
-                    <label for="bookPages">Pages</label>
-                    <input id="bookPages" name="pages" type="number" min="1" max="10000" required>
-                    <label for="bookYear">Published Year</label>
-                    <input id="bookYear" name="published_year" type="number" min="1" max="2100">
+        <!-- What's Next View -->
+        <section id="viewNext" class="card hidden" aria-label="What to Read Next">
+            <h2>What to Read Next</h2>
+            <div id="nextSummary"></div>
+            <div class="table-wrap">
+                <div id="nextTableContainer"></div>
+            </div>
+        </section>
 
-                    <fieldset class="genre-fieldset">
-                        <legend>Genres</legend>
-                        <div id="bookGenresContainer" class="checkbox-grid"></div>
-                    </fieldset>
-
-                    <label for="bookStatus">Status</label>
-                    <select id="bookStatus" name="status" required>
-                        <option value="tbr">To Be Read</option>
-                        <option value="reading">Reading</option>
-                        <option value="read">Read</option>
-                        <option value="wishlist">Wishlist</option>
-                    </select>
-
-                    <div id="startingField" class="hidden">
-                        <label for="bookDateStarted">Date Started</label>
-                        <input id="bookDateStarted" name="date_started" type="date">
-
-                    </div>
-
-                    <div id="readFields" class="hidden">
-                        <label for="bookRating">Rating (1-5)</label>
-                        <input id="bookRating" name="rating" type="number" min="1" max="5">
-                        <label for="bookDateFinished">Date Finished</label>
-                        <input id="bookDateFinished" name="date_finished" type="date">
-                    </div>
-
-                    <button type="submit">Save Book</button>
-                </form>
-            </section>
-
-            <!--What's Next View-->
-            <section id="viewNext" class="card hidden">
-                <h2>What to Read Next</h2>
-                <div id="nextSummary"></div>
-                <div class="table-wrap">
-                    <div id="nextTableContainer"></div> 
-                </div>
-            </section>
-
-            <!--Reading Stats with Pace Forecast-->
-        <section id="viewStats" class="card hidden">
-                <h2>Reading Stats</h2>
-                <form id="goalForm">
-                    <label for="yearlyGoal">Yearly Reading Goal</label>
-                    <input id="yearlyGoal" name="yearly_goal" type="number" min="1" max="500" required>
-                    <button type="submit">Update Goal</button>
-                </form>
-                <div id="statsSummary"></div>
-                <div id="paceForecastContainer"></div>
-            </section> 
-        </main>
-    </body>
-
+        <!-- Reading Stats View -->
+        <section id="viewStats" class="card hidden" aria-label="Reading Stats">
+            <h2>Reading Stats</h2>
+            <form id="goalForm">
+                <label for="yearlyGoal">Yearly Reading Goal</label>
+                <input id="yearlyGoal" name="yearly_goal" type="number" min="1" max="500" required>
+                <button type="submit">Update Goal</button>
+            </form>
+            <div id="statsSummary"></div>
+            <div id="paceForecastContainer"></div>
+        </section>
+    </main>
+</body>
 </html>

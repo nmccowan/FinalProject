@@ -1,11 +1,28 @@
+:root {
+    --accent: rgb(72, 97, 219);
+    --accent-hover: rgb(56, 79, 194);
+    --focus-ring: rgb(42, 63, 168);
+    --text-muted: #4a4a4a;
+    --border-subtle: #c8c8c8;
+    --border-strong: #5c5c5c;
+    --surface-input: rgb(235, 235, 235);
+}
+
 body {
     font-family: Arial, sans-serif;
     margin: 20px;
     max-width: 800px;
+    color: #1a1a1a;
+    line-height: 1.45;
 }
 
 .hidden {
     display: none !important;
+}
+
+:is(button, a, input, select, summary, [tabindex]):focus-visible {
+    outline: 2px solid var(--focus-ring);
+    outline-offset: 2px;
 }
 
 header#authBar {
@@ -16,7 +33,7 @@ header#authBar {
     gap: 10px;
     margin-bottom: 10px;
     padding-bottom: 10px;
-    border-bottom: 1px solid rgb(210, 210, 210);
+    border-bottom: 1px solid var(--border-subtle);
 }
 
 #authBar #registerForm {
@@ -37,8 +54,12 @@ header#authBar {
 }
 
 #btnToggleAuth {
-    background: rgb(72, 97, 219);
-    color: white;
+    background: var(--accent);
+    color: #ffffff;
+}
+
+#btnToggleAuth:hover {
+    background: var(--accent-hover);
 }
 
 #authPanel {
@@ -47,8 +68,17 @@ header#authBar {
     margin-top: 10px;
 }
 
-#btnCloseAuth {
-    float: right;
+.panel-header {
+    display: flex;
+    justify-content: flex-end;
+    margin-bottom: 6px;
+}
+
+.form-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    align-items: center;
 }
 
 #registerPanel {
@@ -58,26 +88,39 @@ header#authBar {
 
 .navigationBar {
     display: flex;
+    flex-wrap: wrap;
     gap: 8px;
     margin-bottom: 12px;
 }
 
 button {
     padding: 8px 14px;
-    border: none;
+    border: 1px solid transparent;
     border-radius: 4px;
     cursor: pointer;
-    color: #5c5c5c;
+    color: var(--text-muted);
     background: none;
+    font-family: inherit;
+    font-size: 0.95rem;
+}
+
+button:hover {
+    background: rgba(0, 0, 0, 0.05);
+    color: #1a1a1a;
 }
 
 button.active {
-    background: rgb(72, 97, 219);
-    color: white;
+    background: var(--accent);
+    color: #ffffff;
+}
+
+button.active:hover {
+    background: var(--accent-hover);
+    color: #ffffff;
 }
 
 .card {
-    border: 1px solid;
+    border: 1px solid var(--border-strong);
     border-radius: 6px;
     padding: 20px;
     margin-top: 6px;
@@ -91,12 +134,16 @@ form {
 
 form button {
     align-self: flex-start;
-    background: rgb(72, 97, 219);
-    color: white;
+    background: var(--accent);
+    color: #ffffff;
+}
+
+form button:hover {
+    background: var(--accent-hover);
 }
 
 fieldset {
-    border: 1px solid #5c5c5c;
+    border: 1px solid var(--border-strong);
     border-radius: 4px;
     padding: 10px;
     width: 50%;
@@ -147,7 +194,7 @@ table {
 
 .stats-bar {
     fill: currentColor;
-    opacity: 0.2;
+    opacity: 0.22;
 }
 
 .stats-bar--active {
@@ -163,19 +210,22 @@ table {
 th, td {
     text-align: left;
     padding: 10px;
-    border-bottom: 1px solid #5c5c5c;
+    border-bottom: 1px solid var(--border-subtle);
 }
 
 label, legend {
-    color: #5c5c5c;
+    color: var(--text-muted);
+    font-weight: 600;
 }
 
 input, select {
     padding: 8px;
-    border: 1px solid #5c5c5c;
+    border: 1px solid var(--border-strong);
     border-radius: 4px;
-    background: rgb(230, 228, 228);
+    background: var(--surface-input);
+    color: #1a1a1a;
     font-family: Arial, sans-serif;
+    font-size: 0.95rem;
 }
 
 form input, form select {
@@ -188,20 +238,26 @@ form input, form select {
     align-items: center;
     gap: 8px;
     margin: 10px 0;
-    color: #5c5c5c;
+    color: var(--text-muted);
 }
 
 .spinner {
     width: 16px;
     height: 16px;
     border: 2px solid rgb(210, 210, 210);
-    border-top-color: rgb(72, 97, 219);
+    border-top-color: var(--accent);
     border-radius: 50%;
     animation: spin 0.8s linear infinite;
 }
 
 @keyframes spin {
     to { transform: rotate(360deg); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .spinner {
+        animation: none;
+    }
 }
 
 #statusBanner {
@@ -213,24 +269,25 @@ form input, form select {
 #statusBanner.success {
     background: #e6f4ea;
     border: 1px solid #1e7e34;
-    color: #1e7e34;
+    color: #155724;
 }
 
 #statusBanner.error {
     background: #fce8e6;
     border: 1px solid #c5221f;
-    color: #c5221f;
+    color: #9b1c19;
 }
 
 .actionLink, button.linkBtn {
-    color: rgb(72, 97, 219);
+    color: var(--accent-hover);
     text-decoration: underline;
     background: none;
+    border: none;
     padding: 0 6px 0 0;
 }
 
 .actionLink.deleteBtn, button.deleteBtn {
-    color: #c5221f;
+    color: #9b1c19;
 }
 
 @media (max-width: 700px) {
