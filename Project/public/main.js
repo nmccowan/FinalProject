@@ -1,6 +1,8 @@
 import { hooks } from './api.js';
 import { initAuth } from './auth.js';
 import { initShelves } from './shelves.js';
+import { initRecommendations } from './recommendations.js';
+import { initStats } from './stats.js';
 
 hooks.onLoading = setLoading;
 
@@ -28,22 +30,64 @@ function showStatus(type, message) {
     }
 }
 
-function switchMainView(viewName) {
-    const targetView = views[viewName] ? viewName : 'shelves';
+document.addEventListener('DOMContentLoaded', async () => {
+    const recsController = initRecommendations({
+        onStatus: showStatus,
+    });
+
+    const statsController = initStats({
+        onStatus: showStatus,
+        onGoalUpdated: () => {
+            statsController.loadStats();
+        },
+    });
+
+    const shelvesController = initShelves({
+        onStatus: showStatus,
+        onBooksUpdated: () => {
+            recsController.loadRecommendations();
+            statsController.loadStats();
+        },
+    });
+
+    const authController = initAuth({
+        onStatus: showStatus,
+        onAuthChange: (user) => {
+            shelvesController.setUser(user);
+            recsController.setUser(user);
+            statsController.setUser(user);
+        },
+    });
+
+    function switchMainView(viewName) {
+        const targetView = views[viewName] ? viewName : 'shelves';
+
+        navButtons.forEach((btn) => {
+            btn.classList.toggle('active', btn.dataset.view === targetView);
+        });
+
+        Object.entries(views).forEach(([key, section]) => {
+            section?.classList.toggle('hidden', key !== targetView);
+        });
+
+        if (targetView === 'next') {
+            recsController.loadRecommendations();
+        } else if (targetView === 'stats') {
+            statsController.loadStats();
+        } else if (targetView === 'shelves') {
+            shelvesController.loadShelf();
+        }
+    }
 
     navButtons.forEach((btn) => {
-        btn.classList.toggle('active', btn.dataset.view === targetView);
+        btn.addEventListener('click', () => {
+            switchMainView(btn.dataset.view);
+        });
     });
 
-    Object.entries(views).forEach(([key, section]) => {
-        section?.classList.toggle('hidden', key !== targetView);
-    });
-}
-
-navButtons.forEach((btn) => {
-    btn.addEventListener('click', () => {
-        switchMainView(btn.dataset.view);
-    });
+    switchMainView('shelves');
+    await shelvesController.loadGenres();
+    await authController.checkSession();
 });
 
 document.addEventListener('DOMContentLoaded', async () => {

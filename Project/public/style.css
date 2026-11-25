@@ -133,6 +133,33 @@ table {
     margin: 0 8px;
 }
 
+.stats-chart-svg {
+    width: 100%;
+    height: auto;
+    display: block;
+    color: inherit;
+}
+
+.stats-axis {
+    stroke: currentColor;
+    stroke-width: 1.5;
+}
+
+.stats-bar {
+    fill: currentColor;
+    opacity: 0.2;
+}
+
+.stats-bar--active {
+    opacity: 0.85;
+}
+
+.stats-label {
+    fill: currentColor;
+    font-size: 11px;
+    text-anchor: middle;
+}
+
 th, td {
     text-align: left;
     padding: 10px;
