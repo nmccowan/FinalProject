@@ -11,8 +11,8 @@ ON CONFLICT DO NOTHING;
 
 
 INSERT INTO authors (name) VALUES 
-    ('Suzanne Collins'), ('Madeline Miller'), ('Bram Stoker'), ('Gillian Flynn'), ('Stephen King'), ('Daphne du Maurier'), ('Natalie Haynes'),('Richard Osman'),('Laura Elliot'),
-    ('Michelle Obama'), ('Ashley Flowers'), ('J.K. Rowling'), ('Rick Riordan'), ('Alex Michaelides'), ('Jennifer Saint'), ('Costanza Casati'), ('John Green'), ('Pierce Brown')
+    ('Suzanne Collins'), ('Madeline Miller'), ('Bram Stoker'), ('Gillian Flynn'), ('Stephen King'), ('Daphne du Maurier'), ('Natalie Haynes'),('Richard Osman'),('Laura Elliot'), ('Mary Renault'),
+    ('Michelle Obama'), ('Ashley Flowers'), ('J.K. Rowling'), ('Rick Riordan'), ('Alex Michaelides'), ('Jennifer Saint'), ('Costanza Casati'), ('John Green'), ('Pierce Brown'), ('Lynn Weingarten'),('Claire Heywood')
 ON CONFLICT DO NOTHING;
 
 
@@ -43,6 +43,10 @@ FROM (VALUES
     ('Looking for Alaska', 'John Green', 297, 2005),
     ('Guilty', 'Laura Elliot', 394, 2017),
     ("Pandora's Jar", 'Natalie Haynes', 308, 2020)
+    ('Suicide Notes from Beautiful Girls', 'Lynn Weingarten', 336, 2015), 
+    ('Ariadne', 'Jennifer Saint', 308, 2021),
+    ('The King Must Die', 'Mary Renault', 338, 1958),
+    ('The Shadow of Perseus', 'Claire Heywood', 304, 2023)
 ) AS v(title, author, pages, yr)
 JOIN authors a ON a.name = v.author
 ON CONFLICT DO NOTHING;
@@ -75,7 +79,11 @@ FROM (VALUES
     ('Looking for Alaska', 'Young Adult Fiction'), 
     ('Guilt', 'Mystery'), ('Guilty', 'Thriller'),
     ("Pandora's Jar", 'Non-Fiction'),
-    ('The Children of Jocasta', 'Historical Fiction'), ('The Children of Jocasta', 'Literary Fiction')
+    ('The Children of Jocasta', 'Historical Fiction'), ('The Children of Jocasta', 'Literary Fiction'), 
+    ('Suicide Notes from Beautiful Girls', 'Young Adult Fiction'), ('Suicide Notes from Beautiful Girls', 'Mystery'), 
+    ('Ariadne', 'Fanatasy'), ('Ariadne', 'Historical Fiction'),
+    ('The King Must Die', 'Historical Fiction'),
+    ('The Shadow of Perseus', 'Historical Fiction'),  ('The Shadow of Perseus', 'Fantasy')
 ) AS v(title, genre)
 JOIN books b ON b.title = v.title
 JOIN genres g ON g.name = v.genre
@@ -109,7 +117,11 @@ FROM (VALUES
     ('Looking for Alaska', 'read', 3, '2026-11-22', '2026-05-30', '2026-06-25')
     ('Guilt', 'read', 3, '2026-11-22', '2026-06-27', '2026-07-14'),
     ("Pandora's Jar", 'read', 4, '2026-11-22', '2026-03-02', '2026-03-22'),
-    ('The Children of Jocasta', 'read', 4, '2026-11-22', '2026-07-23', '2026-08-09')
+    ('The Children of Jocasta', 'read', 4, '2026-11-22', '2026-07-23', '2026-08-09'), 
+    ('Suicide Notes for Beautiful Girls', 'read', 2, '2026-11-22', '2026-08-11', '2026-08-29'),
+    ('Ariadne', 'read', 5, '2026-11-22', '2026-09-09', '2026-09-16'),
+    ('The King Must Die', 'tbr', NULL, '2026-11-22', NULL, NULL),
+    ('The Shadows of Perseus', 'tbr', NULL, '2026-11-22', NULL, NULL)
 ) AS v(title, status, rating, added, started, finished)
 JOIN users u ON u.username = 'demo'
 JOIN books b ON b.title = v.title
