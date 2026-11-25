@@ -82,14 +82,15 @@ class UserBookRepo {
                 JOIN books b ON ub.book_id = b.id
                 JOIN authors a ON b.author_id = a.id"
                 . $whereSql
-                . " ORDER BY {$orderBy}, ub.id ASC LIMIT :limit OFFSET :offset";
+                . " ORDER BY {$orderBy}, ub.id ASC LIMIT ? OFFSET ?";
 
         $stmt = $this->db->prepare($sql);
-        foreach ($params as $idx => $val) {
-            $stmt->bindValue($idx + 1, $val);
+        $paramIndex = 1;
+        foreach ($params as $val) {
+            $stmt->bindValue($paramIndex++, $val);
         }
-        $stmt->bindValue(':limit', $perPage, PDO::PARAM_INT);
-        $stmt->bindValue(':offset', $offset, PDO::PARAM_INT);
+        $stmt->bindValue($paramIndex++, $perPage, PDO::PARAM_INT);
+        $stmt->bindValue($paramIndex++, $offset, PDO::PARAM_INT);
         $stmt->execute();
         $rows = $stmt->fetchAll();
 
@@ -131,7 +132,7 @@ class UserBookRepo {
             throw new Exception("Shelf entry not found.", 404);
         }
 
-        [$status, $rating, $dateStarted, $dateFinished] = ShelfValidator::validateShelfFields($data, true);
+        [$status, $rating, $dateStarted, $dateFinished] = validShelf::validateShelfFields($data, true);
         $stmt = $this->db->prepare(
             "UPDATE user_books
              SET status = ?, rating = ?, date_started = ?, date_finished = ?
