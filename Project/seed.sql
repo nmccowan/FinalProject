@@ -5,14 +5,14 @@ INSERT INTO users (username, email, password_hash, yearly_goal) VALUES
 ON CONFLICT DO NOTHING;
 
 INSERT INTO genres (name) VALUES 
-    ('Fantasy'), ('Science Fiction'), ('Mystery'), ('Thriller'), ('Horror'), ('Dystopian'),
+    ('Fantasy'), ('Science Fiction'), ('Mystery'), ('Thriller'), ('Horror'), ('Dystopian'),('Young Adult Fiction')
     ('Romance'), ('Non-Fiction'), ('Memoir'), ('Historical Fiction'), ('Literary Fiction'), ('Gothic')
 ON CONFLICT DO NOTHING;
 
 
 INSERT INTO authors (name) VALUES 
-    ('Suzanne Collins'), ('Madeline Miller'), ('Bram Stoker'), ('Gillian Flynn'), ('Stephen King'), ('Daphne du Maurier'), ('Natalie Haynes'),
-    ('Michelle Obama'), ('Ashley Flowers'), ('J.K. Rowling'), ('Rick Riordan'), ('Alex Michaelides'), ('Jennifer Saint'), ('Costanza Casati'), ('John Green')
+    ('Suzanne Collins'), ('Madeline Miller'), ('Bram Stoker'), ('Gillian Flynn'), ('Stephen King'), ('Daphne du Maurier'), ('Natalie Haynes'),('Richard Osman'),('Laura Elliot'),
+    ('Michelle Obama'), ('Ashley Flowers'), ('J.K. Rowling'), ('Rick Riordan'), ('Alex Michaelides'), ('Jennifer Saint'), ('Costanza Casati'), ('John Green'), ('Pierce Brown')
 ON CONFLICT DO NOTHING;
 
 
@@ -37,7 +37,12 @@ FROM (VALUES
     ('Stone Blind', 'Natalie Haynes', 384, 2022),
     ('Atalanta', 'Jennifer Saint', 304, 2023),
     ('Elektra', 'Jennifer Saint', 304, 2022),
-    ('Clytemnestra', 'Costanza Casati', 448, 2023)
+    ('Clytemnestra', 'Costanza Casati', 448, 2023),
+    ('The Thursday Murder Club', 'Richard Osman', 382, 2020),
+    ('Red Rising', 'Pierce Brown', 382, 2014),
+    ('Looking for Alaska', 'John Green', 297, 2005),
+    ('Guilty', 'Laura Elliot', 394, 2017),
+    ("Pandora's Jar", 'Natalie Haynes', 308, 2020)
 ) AS v(title, author, pages, yr)
 JOIN authors a ON a.name = v.author
 ON CONFLICT DO NOTHING;
@@ -64,7 +69,13 @@ FROM (VALUES
     ('Stone Blind','Historical Fiction'), ('Stone Blind', 'Fantasy'), ('Stone Blind', 'Literary Fiction'),
     ('Atalanta', 'Historical Fiction'), ('Atalanta', 'Fantasy'), ('Atalanta', 'Literary Fiction'),
     ('Elektra', 'Historical Fiction'), ('Elektra', 'Fantasy'), ('Elektra', 'Literary Fiction'),
-    ('Clytemnestra','Historical Fiction'), ('Clytemnestra', 'Literary Fiction') 
+    ('Clytemnestra','Historical Fiction'), ('Clytemnestra', 'Literary Fiction'), 
+    ('The Thursday Murder Club', 'Mystery'),
+    ('Red Rising', 'Science Fiction'),
+    ('Looking for Alaska', 'Young Adult Fiction'), 
+    ('Guilt', 'Mystery'), ('Guilty', 'Thriller'),
+    ("Pandora's Jar", 'Non-Fiction'),
+    ('The Children of Jocasta', 'Historical Fiction'), ('The Children of Jocasta', 'Literary Fiction')
 ) AS v(title, genre)
 JOIN books b ON b.title = v.title
 JOIN genres g ON g.name = v.genre
@@ -92,7 +103,13 @@ FROM (VALUES
     ('Stone Blind', 'read', 3, '2026-11-22', '2026-03-22', '2026-04-06'),
     ('Atalanta', 'reading', NULL, '2026-11-22', '2026-11-01', NULL),
     ('Elektra', 'tbr', NULL, '2026-11-22', NULL, NULL),
-    ('Clytemnestra', 'read', 5, '2026-11-22', '2025-11-12', '2025-12-19') 
+    ('Clytemnestra', 'read', 5, '2026-11-22', '2025-11-12', '2025-12-19'),
+    ('The Thursday Murder Club','tbr', NULL, '2026-11-22', NULL, NULL),
+    ('Red Rising','wishlist', NULL, '2026-11-22', NULL, NULL),
+    ('Looking for Alaska', 'read', 3, '2026-11-22', '2026-05-30', '2026-06-25')
+    ('Guilt', 'read', 3, '2026-11-22', '2026-06-27', '2026-07-14'),
+    ("Pandora's Jar", 'read', 4, '2026-11-22', '2026-03-02', '2026-03-22'),
+    ('The Children of Jocasta', 'read', 4, '2026-11-22', '2026-07-23', '2026-08-09')
 ) AS v(title, status, rating, added, started, finished)
 JOIN users u ON u.username = 'demo'
 JOIN books b ON b.title = v.title
