@@ -1,7 +1,7 @@
 import { hooks } from './api.js';
 import { initAuth } from './auth.js';
 import { initShelves } from './shelves.js';
-import { initRecommendations } from './recommendations.js';
+import { initRecommendations } from './recs.js';
 import { initStats } from './stats.js';
 
 hooks.onLoading = setLoading;
